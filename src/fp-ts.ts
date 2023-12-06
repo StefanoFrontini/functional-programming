@@ -83,3 +83,79 @@ const value2: number | null = null;
 
 console.log(O.fromNullable(value1));
 console.log(O.fromNullable(value2));
+
+const head = <A>(as: ReadonlyArray<A>): O.Option<A> =>
+  as.length === 0 ? O.none : O.some(as[0]);
+
+console.log(head([5, 6, 7]));
+console.log([]);
+
+// const getBestMovie = (titles: ReadonlyArray<string>): O.Option<string> =>
+//   pipe(
+//     titles,
+//     head,
+//     O.map((s) => s.toUpperCase()),
+//     O.map((s) => `Best - ${s}`)
+//   );
+
+const toUppercase = (s: string) => s.toUpperCase();
+const addPrefix = (prefix: string) => (s: string) => `${prefix}${s}`;
+
+const getBestMovie = (titles: ReadonlyArray<string>): O.Option<string> =>
+  pipe(titles, head, O.map(toUppercase), O.map(addPrefix("Best - ")));
+
+console.log(getBestMovie(["Jaws", "Star Wars"]));
+console.log(getBestMovie([]));
+
+// const inverseHead = (ns: ReadonlyArray<number>): O.Option<number> =>
+//   pipe(ns, head, O.map(inverse), O.flatten);
+
+const inverseHead = (ns: ReadonlyArray<number>): O.Option<number> =>
+  pipe(ns, head, O.chain(inverse));
+console.log(inverseHead([2, 6, 8]));
+console.log(inverseHead([0, 6, 8]));
+
+const isEven = (a: number) => a % 2 === 0;
+
+const getEven = O.fromPredicate(isEven);
+// (a: number) => Option<number>
+
+console.log(getEven(4));
+console.log(getEven(3));
+
+type Discount = Readonly<{
+  percentage: number;
+  expired: boolean;
+}>;
+
+const isDiscountValid = (discount: Discount): boolean => !discount.expired;
+
+const getDiscountText = (discount: Discount): O.Option<string> =>
+  pipe(
+    discount,
+    O.fromPredicate(isDiscountValid),
+    // Option<Discount>
+    O.map(({ percentage }) => `${percentage}% DISCOUNT!`)
+  );
+
+console.log(getDiscountText({ percentage: 10, expired: false }));
+console.log(getDiscountText({ percentage: 20, expired: true }));
+
+type Circle = { type: "Circle"; radius: number };
+
+type Square = { type: "Square"; side: number };
+
+type Shape = Circle | Square;
+
+const isCircle = (s: Shape): s is Circle => s.type === "Circle";
+
+const getCircle = O.fromPredicate(isCircle);
+// (s: Shape) => Option<Circle>
+
+const circle: Shape = { type: "Circle", radius: 3 };
+const square: Square = { type: "Square", side: 4 };
+
+console.log(getCircle(circle));
+// O.some(circle) typed as Option<Circle>
+console.log(getCircle(square));
+// O.none typed as Option<Circle>
